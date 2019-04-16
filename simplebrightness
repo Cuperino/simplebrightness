@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+# MIT License
+# 
+# Copyright (c) 2019 Javier O. Cordero Pérez
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import subprocess
+from tkinter import Tk, Label, Scale, DoubleVar, X, CENTER, HORIZONTAL
+
+def updateBrightness(val):
+  # Compute brightness in the appropriate scale
+  brightness = round(float(val)*unit)
+  # Change brightness
+  process = subprocess.run(["brightnessctl", "-m", "s", str(brightness)], stdout=subprocess.PIPE)
+  # Display value from Scale in two decimal places
+  percentage = "Brightness: " + '%.2f' % float(val) + "%"
+  label.config(text = percentage)
+
+# Get initial system values
+process = subprocess.Popen(["brightnessctl", "-m"], stdout=subprocess.PIPE)
+# Read process output: Take first line, convert to string, remove last 3 chars, and split on commas.
+result = str(process.communicate()[0])[0:-3].split(',')
+max = int(result[4])
+unit = (max-1)/100
+current = 100*float(result[2])/float(max)
+
+# Initialize GUI
+root = Tk()
+root.title("Brightness Adjustment")
+
+#  Initialize brightness Label
+label = Label(root, width=20, text="Brightness: "+'%.2f'%current+"%")
+label.pack(anchor=CENTER, expand=True, fill=X)
+
+# Initialize Scale
+percentage = DoubleVar()
+percentage.set(current)
+# Using 0.001 resolution allows the scale to get precise values on a high res window
+scale = Scale(root, from_=0, to=100, variable=percentage, orient=HORIZONTAL, command=updateBrightness, resolution=0.001, showvalue=0)
+scale.pack(anchor=CENTER, expand=True, fill=X)
+
+# Set minimum window size
+root.update()
+root.minsize(root.winfo_width(), root.winfo_height())
+
+# Trash values that are no longer necessary
+del process
+del result
+del current
+
+# Start GUI loop
+root.mainloop()
