@@ -6,9 +6,11 @@ This program interfaces with the `brightnessctl` terminal tool to allow changing
 
 ## Installation
 1. First install [brightnessctl](https://github.com/Hummer12007/brightnessctl).
-2. Then download `simplebrightness` from this repository.
-3. Make sure that `simplebrightness` is marked as an executable on your computer. You can run `chmod +x ./simplebrightness` on the terminal, from inside the `simple-brightness` folder to make it an executable.
-4. Run `simplebrightness` (simple double click on the script or run it from a terminal).
+2. Add `users` who will run `simplebrightness` to the `video` group. Do this by executing `sudo usermod -a -G video USERNAME` from the terminal for each user, replacing USERNAME with your desired `user`.
+3. Then [download `simplebrightness` from this repository](https://github.com/javiercordero/simple-brightness/releases).
+4. Extract the downloaded files on your computer.
+5. Make sure that `simplebrightness` is marked as an executable. You can run `chmod +x ./simplebrightness` on the terminal, from inside the extracted folder to make it an executable.
+6. Run `simplebrightness` (simple double click on the script or run it from a terminal).
 
 ## About the code
 Simple Brightness is written in Python 3, using Tk, and is licensed under the MIT License, the same license as [brightnessctl](https://github.com/Hummer12007/brightnessctl/blob/master/LICENSE).
