@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 import subprocess
-from tkinter import Tk, Label, Scale, DoubleVar, X, CENTER, HORIZONTAL
+from tkinter import Tk, Button, DoubleVar, Frame, Label, Scale, W, X, BOTTOM, CENTER, LEFT, HORIZONTAL
 
 def updateBrightness(val):
   # Compute brightness in the appropriate scale
@@ -31,20 +31,94 @@ def updateBrightness(val):
   # Change brightness
   process = subprocess.run(["brightnessctl", "-m", "s", str(brightness)], stdout=subprocess.PIPE)
   # Display value from Scale in two decimal places
-  percentage = "Brightness: " + '%.2f' % float(val) + "%"
-  label.config(text = percentage)
+  percentageLabel = "Brightness: " + '%.2f' % float(val) + "%"
+  label.config(text = percentageLabel)
+
+def getCurrentPercentage():
+  process = subprocess.Popen(["brightnessctl", "-m"], stdout=subprocess.PIPE)
+  result = str(process.communicate()[0])[0:-3].split(',')
+  return round(100*float(result[2])/float(maxBrightness),3)
+
+def toggleBrightness():
+  global tempPercentage
+  # Get current brightness
+  currentPercentage = getCurrentPercentage()
+  # If current brightness is greater than 0, save curent brightness and turn backlight off
+  if currentPercentage > 0:
+    tempPercentage = currentPercentage
+    percentage.set(0)
+    updateBrightness(0)
+  # Otherwise, return backlight back to its last observed value
+  else:
+    setBrightness(tempPercentage)
+
+def setBrightness(value):
+  percentage.set(value)
+  updateBrightness(value)  
+
+def nextIntensity():
+  # Get current brightness
+  currentPercentage = getCurrentPercentage()
+  # Go through keys
+  global keys
+  for key in keys:
+    if key > currentPercentage:
+      # useKey
+      print("goRightkey")
+      print(key)
+      setBrightness(key)
+      break
+
+def previousIntensity():
+  # Get current brightness
+  currentPercentage = getCurrentPercentage()
+  # Go through keys
+  global keys
+  previous = None
+  l = len(keys)
+  for index, key in enumerate(keys):
+    if key >= currentPercentage and previous is not None:
+      print("goLeftkey")
+      print(previous)
+      setBrightness(previous)
+      break
+    else:
+      previous = keys[index]
+
+def saveIntensity():
+  # Get current brightness
+  currentPercentage = getCurrentPercentage()
+  # Go through keys
+  global keys
+  for index, key in enumerate(keys):
+    # Unset Key
+    if key == currentPercentage:
+      if key > minBrightness and key < 100:
+        del keys[index];
+      break
+    # Set Key
+    elif key > currentPercentage:      
+      keys.insert(index, currentPercentage)
+      break
 
 # Get initial system values
 process = subprocess.Popen(["brightnessctl", "-m"], stdout=subprocess.PIPE)
 # Read process output: Take first line, convert to string, remove last 3 chars, and split on commas.
 result = str(process.communicate()[0])[0:-3].split(',')
-max = int(result[4])
-unit = (max-1)/100
-current = 100*float(result[2])/float(max)
+maxBrightness = int(result[4])
+unit = (maxBrightness)/100
+minBrightness = round(1/unit, 3)
+current = round(100*float(result[2])/float(maxBrightness),3)
+tempPercentage = current
+
+# Initialize keys
+keys = [0,minBrightness,100]
 
 # Initialize GUI
 root = Tk()
-root.title("Brightness Adjustment")
+root.title("SimpleBrightness")
+buttons = Frame(root)
+buttons.pack(side = BOTTOM)
 
 #  Initialize brightness Label
 label = Label(root, width=20, text="Brightness: "+'%.2f'%current+"%")
@@ -54,8 +128,28 @@ label.pack(anchor=CENTER, expand=True, fill=X)
 percentage = DoubleVar()
 percentage.set(current)
 # Using 0.001 resolution allows the scale to get precise values on a high res window
-scale = Scale(root, from_=0, to=100, variable=percentage, orient=HORIZONTAL, command=updateBrightness, resolution=0.001, showvalue=0)
+scale = Scale(root, from_=minBrightness, to=100, variable=percentage, orient=HORIZONTAL, command=updateBrightness, resolution=0.001, showvalue=0)
 scale.pack(anchor=CENTER, expand=True, fill=X)
+
+# Toggle brightness on or off
+toggle = Button(buttons, command=toggleBrightness, text="\u2606")
+toggle.pack(anchor=W,side=LEFT, expand=False, fill=X)
+
+# Previous button
+#backIcon=PhotoImage(file="noun_Light_On_32.png")
+toggle = Button(buttons, command=previousIntensity, text="\u25C0")
+toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
+
+# Set button
+#keyIcon=PhotoImage(file="noun_Light_On_32.png")
+#toggle = Button(buttons, command=toggleBrightness, text="\u272A")
+toggle = Button(buttons, command=saveIntensity, text="\u25CF")
+toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
+
+# Next button
+#nextIcon=PhotoImage(file="noun_Light_On_32.png")
+toggle = Button(buttons, command=nextIntensity, text="\u25B6")
+toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
 
 # Set minimum window size
 root.update()
