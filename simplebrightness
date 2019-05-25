@@ -23,6 +23,8 @@
 # SOFTWARE.
 
 import subprocess
+import configparser
+import json
 from tkinter import Tk, Button, DoubleVar, Frame, Label, Scale, W, X, BOTTOM, CENTER, LEFT, HORIZONTAL
 
 def updateBrightness(val):
@@ -63,7 +65,6 @@ def nextIntensity():
   global keys
   for key in keys:
     if key > currentPercentage:
-      # useKey
       print("goRightkey")
       print(key)
       setBrightness(key)
@@ -101,6 +102,15 @@ def saveIntensity():
       keys.insert(index, currentPercentage)
       break
 
+def on_closing():
+    global keys
+    keysAsString = ', '.join(str(value) for value in keys)
+    keysAsString = '[' + keysAsString + ']'
+    config['DEFAULT']['Brightness'] = keysAsString
+    with open('simplebrightness.ini', 'w') as configfile:
+        config.write(configfile)
+    root.destroy()
+
 # Get initial system values
 process = subprocess.Popen(["brightnessctl", "-m"], stdout=subprocess.PIPE)
 # Read process output: Take first line, convert to string, remove last 3 chars, and split on commas.
@@ -111,8 +121,12 @@ minBrightness = round(1/unit, 3)
 current = round(100*float(result[2])/float(maxBrightness),3)
 tempPercentage = current
 
+# Get save file settings
+config = configparser.ConfigParser()
+config['DEFAULT'] = {'Brightness': '[0,' + str(minBrightness) +',100]'}
+config.read('simplebrightness.ini')
 # Initialize keys
-keys = [0,minBrightness,100]
+keys = json.loads(config['DEFAULT']['Brightness'])
 
 # Initialize GUI
 root = Tk()
@@ -136,18 +150,14 @@ toggle = Button(buttons, command=toggleBrightness, text="\u2606")
 toggle.pack(anchor=W,side=LEFT, expand=False, fill=X)
 
 # Previous button
-#backIcon=PhotoImage(file="noun_Light_On_32.png")
 toggle = Button(buttons, command=previousIntensity, text="\u25C0")
 toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
 
 # Set button
-#keyIcon=PhotoImage(file="noun_Light_On_32.png")
-#toggle = Button(buttons, command=toggleBrightness, text="\u272A")
 toggle = Button(buttons, command=saveIntensity, text="\u25CF")
 toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
 
 # Next button
-#nextIcon=PhotoImage(file="noun_Light_On_32.png")
 toggle = Button(buttons, command=nextIntensity, text="\u25B6")
 toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
 
@@ -159,6 +169,8 @@ root.minsize(root.winfo_width(), root.winfo_height())
 del process
 del result
 del current
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Start GUI loop
 root.mainloop()
