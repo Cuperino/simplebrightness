@@ -2,7 +2,7 @@
 
 # MIT License
 # 
-# Copyright (c) 2019 Javier O. Cordero Pérez
+# Copyright (c) 2019, 2020 Javier O. Cordero Pérez
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -164,6 +164,7 @@ toggle.pack(anchor=W, side=LEFT, expand=False, fill=X)
 # Set minimum window size
 root.update()
 root.minsize(root.winfo_width(), root.winfo_height())
+root.maxsize(65536, root.winfo_height())
 
 # Trash values that are no longer necessary
 del process
